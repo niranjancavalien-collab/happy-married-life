@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Happy Marriage Gayatri</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Cinzel Decorative & Playfair Display for Traditional Styling -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 50% 0%, #2b080d 0%, #170407 50%, #0c0204 100%);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .font-traditional-title {
+      font-family: 'Cinzel Decorative', serif;
+    }
+
+    .font-traditional-serif {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* Traditional Gold & Red Theme Styling */
+    .traditional-card {
+      background: linear-gradient(165deg, #4A0E17 0%, #2C070C 60%, #1A0306 100%);
+      box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(212, 175, 55, 0.25),
+        0 0 30px rgba(212, 175, 55, 0.12);
+    }
+
+    .gold-border-glow {
+      border: 1.5px solid rgba(234, 179, 8, 0.4);
+    }
+
+    .scratch-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.9 / 1;
+      overflow: hidden;
+      border-radius: 16px;
+      background: #0f0305;
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    .voucher-code {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: 
+        radial-gradient(circle at 50% 50%, rgba(234, 179, 8, 0.08), transparent 70%),
+        #150407;
+    }
+
+    .code-text {
+      color: #FDE047;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: clamp(17px, 5vw, 24px);
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
+    }
+
+    #scratchCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .pulse {
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.85;
+      }
+      50% {
+        transform: scale(1.04);
+        opacity: 1;
+      }
+    }
+
+    .copy-button {
+      background: linear-gradient(135deg, #FDE047 0%, #CA8A04 100%);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .copy-button:active {
+      transform: scale(0.97);
+    }
+
+    .copy-button:hover {
+      box-shadow: 0 8px 25px rgba(234, 179, 8, 0.25);
+    }
+
+    .hidden-after-reveal {
+      display: none;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center px-4 py-8 text-white">
+
+  <main id="app" class="w-full max-w-[420px]"></main>
+
+  <script>
+    // -------------------------------------------------------------
+    // 1. DATA CONFIGURATION
+    // -------------------------------------------------------------
+    const CARDS_DATA = [
+      { id: "card1", code: "JBGE4GGDDCTEVH" },
+      { id: "card2", code: "4A6GX87APETFNQ" },
+      { id: "card3", code: "WCR4QYBM6QKXFX" },
+      { id: "card4", code: "WRWCWHYXPW6UFE" },
+      { id: "card5", code: "W6QC3WQQAB8G3R" }
+    ];
+
+    const GREETING = "Best wishes Gayatri";
+    const SENDER = "From Mohit Chitkara and Family";
+
+    // -------------------------------------------------------------
+    // 2. ROUTER LOGIC
+    // -------------------------------------------------------------
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedCardId = urlParams.get("id");
+    const appEl = document.getElementById("app");
+
+    if (selectedCardId) {
+      const card = CARDS_DATA.find(c => c.id === selectedCardId);
+      if (card) {
+        renderCardView(card);
+      } else {
+        renderNotFound();
+      }
+    } else {
+      renderAdminView();
+    }
+
+    // -------------------------------------------------------------
+    // 3. ADMIN LINK GENERATOR VIEW
+    // -------------------------------------------------------------
+    function renderAdminView() {
+      const baseUrl = window.location.origin + window.location.pathname;
+
+      let linksHtml = CARDS_DATA.map((card, idx) => {
+        const fullUrl = `${baseUrl}?id=${card.id}`;
+        return `
+          <div class="bg-[#24060A] border border-amber-500/20 rounded-2xl p-4 space-y-3 shadow-lg">
+            
+            <!-- Card Header -->
+            <div class="flex items-center justify-between border-b border-amber-500/10 pb-2.5">
+              <div class="flex items-center gap-2">
+                <div class="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                    <rect x="2" y="7" width="20" height="5"></rect>
+                    <line x1="12" y1="22" x2="12" y2="7"></line>
+                    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+                  </svg>
+                </div>
+                <span class="text-xs font-bold text-amber-100 uppercase tracking-wider">Gift Voucher #${idx + 1}</span>
+              </div>
+              <span class="font-mono text-[11px] text-amber-300/80 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-500/20">
+                ${card.code}
+              </span>
+            </div>
+
+            <!-- URL Input Box -->
+            <div class="flex items-center gap-2 bg-black/50 border border-amber-500/20 rounded-xl p-1.5 pl-3">
+              <svg class="w-4 h-4 text-amber-500/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              
+              <span class="text-xs font-mono text-amber-100/70 truncate w-full select-all">
+                ${fullUrl}
+              </span>
+
+              <button onclick="copyAdminLink('${fullUrl}', this)" class="copy-button text-black font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1.5 shrink-0 transition-all">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span>Copy</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      appEl.innerHTML = `
+        <div class="space-y-6">
+          <div class="text-center space-y-1">
+            <p class="text-[10px] uppercase tracking-[0.28em] text-amber-400/80 font-bold">Admin Dashboard</p>
+            <h1 class="text-xl font-traditional-serif text-amber-200 font-bold">Happy Marriage Gayatri</h1>
+            <p class="text-xs text-amber-100/60">${SENDER}</p>
+          </div>
+          <div class="space-y-3">
+            ${linksHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function copyAdminLink(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = `<span>Copied! ✓</span>`;
+        setTimeout(() => {
+          btn.innerHTML = orig;
+        }, 1800);
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 4. TRADITIONAL CARD VIEW
+    // -------------------------------------------------------------
+    function renderCardView(card) {
+      appEl.innerHTML = `
+        <section class="traditional-card relative overflow-hidden rounded-[28px] border border-amber-500/30 p-1">
+          
+          <!-- Decorative Corner Motifs -->
+          <div class="absolute top-3 left-3 w-7 h-7 border-t-2 border-l-2 border-amber-400/40 rounded-tl-lg pointer-events-none"></div>
+          <div class="absolute top-3 right-3 w-7 h-7 border-t-2 border-r-2 border-amber-400/40 rounded-tr-lg pointer-events-none"></div>
+          <div class="absolute bottom-3 left-3 w-7 h-7 border-b-2 border-l-2 border-amber-400/40 rounded-bl-lg pointer-events-none"></div>
+          <div class="absolute bottom-3 right-3 w-7 h-7 border-b-2 border-r-2 border-amber-400/40 rounded-br-lg pointer-events-none"></div>
+
+          <div class="relative p-5 sm:p-6">
+
+            <!-- Header Motif & Title -->
+            <header class="text-center space-y-2">
+              
+              <!-- Traditional Diya / Blessing Mandala Icon -->
+              <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M12 2L14.5 8.5L21 9.5L16.5 14L17.5 20.5L12 17.5L6.5 20.5L7.5 14L3 9.5L9.5 8.5L12 2Z" fill="rgba(234, 179, 8, 0.15)"/>
+                </svg>
+              </div>
+
+              <!-- Traditional Blessing Heading -->
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-[0.25em] text-amber-400">
+                  Happy Married Life
+                </p>
+                <h1 class="mt-1.5 text-2xl font-traditional-serif font-bold tracking-tight text-amber-100">
+                  ${GREETING}
+                </h1>
+                <p class="mt-1 text-xs italic font-traditional-serif text-amber-200/80">
+                  ${SENDER}
+                </p>
+              </div>
+
+            </header>
+
+            <!-- Amazon Branding Tag -->
+            <div class="mt-5 flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-950/40 px-4 py-2.5">
+              <span class="text-[11px] font-semibold text-amber-200/90 tracking-wide">Amazon Gift Voucher</span>
+              
+              <!-- Amazon Smile -->
+              <svg class="w-14 height-auto" viewBox="0 0 120 50" xmlns="http://www.w3.org/2000/svg" aria-label="Amazon">
+                <text x="0" y="30" fill="#FDE047" font-size="27" font-family="Arial, sans-serif" font-weight="700">amazon</text>
+                <path d="M24 38 C45 49, 75 49, 97 36" fill="none" stroke="#FDE047" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M91 34 L98 36 L94 42" fill="none" stroke="#FDE047" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+
+            <!-- Scratch Area -->
+            <div class="mt-5">
+              <div id="scratchWrapper" class="scratch-wrapper">
+                
+                <!-- Hidden Code -->
+                <div class="voucher-code">
+                  <div class="text-center">
+                    <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400/80 mb-1">Your Voucher Code</div>
+                    <div id="voucherCode" class="code-text">${card.code}</div>
+                  </div>
+                </div>
+
+                <!-- Scratch Canvas -->
+                <canvas id="scratchCanvas"></canvas>
+
+                <!-- Scratch Hint -->
+                <div id="scratchHint" class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div class="text-center pulse">
+                    <svg class="w-7 h-7 mx-auto mb-1.5 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M15.5 4.5L19.5 8.5" />
+                      <path d="M13.5 6.5L17.5 10.5" />
+                      <path d="M4 20l3.5-1 10-10-3.5-3.5-10 10L4 20z" />
+                      <path d="M4 20l3-3" />
+                    </svg>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-100">Scratch Here</p>
+                    <p class="mt-0.5 text-[9px] text-amber-200/60">Drag finger or mouse to reveal</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Scratch Status -->
+            <div class="mt-3 flex items-center justify-between">
+              <span id="scratchStatus" class="text-[10px] text-amber-200/50">Scratch to reveal voucher</span>
+              <span id="revealStatus" class="text-[10px] font-semibold text-amber-400">0%</span>
+            </div>
+
+            <!-- Copy Code Button -->
+            <div id="copySection" class="hidden-after-reveal mt-5">
+              <button id="copyButton" type="button" class="copy-button w-full rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-lg">
+                Copy Code
+              </button>
+            </div>
+
+            <!-- Traditional Footer Blessing -->
+            <footer class="mt-6 border-t border-amber-500/15 pt-3 text-center text-[10px] text-amber-200/50 font-traditional-serif">
+              Wishing you a lifetime of love, happiness & togetherness
+            </footer>
+
+          </div>
+        </section>
+
+        <p class="mt-4 text-center text-[10px] text-amber-500/40 uppercase tracking-widest font-semibold">
+          Happy Marriage Gayatri
+        </p>
+      `;
+
+      initScratchEngine();
+    }
+
+    // -------------------------------------------------------------
+    // 5. CANVAS & INTERACTION ENGINE (GOLD EMBOSSED FOIL)
+    // -------------------------------------------------------------
+    function initScratchEngine() {
+      const canvas = document.getElementById("scratchCanvas");
+      const wrapper = document.getElementById("scratchWrapper");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+      const scratchHint = document.getElementById("scratchHint");
+      const scratchStatus = document.getElementById("scratchStatus");
+      const revealStatus = document.getElementById("revealStatus");
+      const copySection = document.getElementById("copySection");
+      const copyButton = document.getElementById("copyButton");
+      const voucherCode = document.getElementById("voucherCode");
+
+      const REVEAL_THRESHOLD = 0.55;
+      const BRUSH_SIZE = 38;
+
+      let isScratching = false;
+      let revealed = false;
+      let lastPoint = null;
+      let canvasWidth = 0;
+      let canvasHeight = 0;
+
+      function resizeCanvas() {
+        const rect = wrapper.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        canvasWidth = rect.width;
+        canvasHeight = rect.height;
+
+        canvas.width = Math.floor(canvasWidth * dpr);
+        canvas.height = Math.floor(canvasHeight * dpr);
+
+        canvas.style.width = canvasWidth + "px";
+        canvas.style.height = canvasHeight + "px";
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawGoldFoil();
+      }
+
+      function drawGoldFoil() {
+        // Traditional Gold Metallic Gradient
+        const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+        gradient.addColorStop(0, "#85581A");
+        gradient.addColorStop(0.2, "#EAB308");
+        gradient.addColorStop(0.4, "#A16207");
+        gradient.addColorStop(0.6, "#FDE047");
+        gradient.addColorStop(0.8, "#85581A");
+        gradient.addColorStop(1, "#CA8A04");
+
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        // Gold Sparkle Overlay
+        for (let i = 0; i < 2000; i++) {
+          const x = Math.random() * canvasWidth;
+          const y = Math.random() * canvasHeight;
+          const alpha = Math.random() * 0.25;
+
+          ctx.fillStyle = Math.random() > 0.4 ? `rgba(255,255,255,${alpha})` : `rgba(80,40,0,${alpha})`;
+          ctx.fillRect(x, y, Math.random() * 2 + 0.5, Math.random() * 2 + 0.5);
+        }
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillStyle = "rgba(40, 15, 0, 0.75)";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText("SCRATCH TO REVEAL", canvasWidth / 2, canvasHeight / 2);
+
+        ctx.font = "500 9px Arial";
+        ctx.fillStyle = "rgba(40, 15, 0, 0.55)";
+        ctx.fillText("Warm Blessings & Gift Inside", canvasWidth / 2, canvasHeight / 2 + 18);
+      }
+
+      function getPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX = event.touches && event.touches.length > 0 ? event.touches[0].clientX : event.clientX;
+        let clientY = event.touches && event.touches.length > 0 ? event.touches[0].clientY : event.clientY;
+
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      function scratch(point) {
+        if (revealed) return;
+
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = BRUSH_SIZE;
+
+        if (lastPoint) {
+          ctx.beginPath();
+          ctx.moveTo(lastPoint.x, lastPoint.y);
+          ctx.lineTo(point.x, point.y);
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, BRUSH_SIZE / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        lastPoint = point;
+        checkRevealProgress();
+      }
+
+      function checkRevealProgress() {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let transparent = 0;
+        const step = 8;
+
+        for (let i = 3; i < imageData.data.length; i += step * 4) {
+          if (imageData.data[i] < 80) transparent++;
+        }
+
+        const totalSamples = Math.floor(imageData.data.length / (step * 4));
+        const percent = transparent / totalSamples;
+        const displayPercent = Math.min(Math.round(percent * 100), 100);
+
+        revealStatus.textContent = `${displayPercent}%`;
+
+        if (percent >= REVEAL_THRESHOLD) {
+          reveal();
+        }
+      }
+
+      function reveal() {
+        if (revealed) return;
+        revealed = true;
+
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        scratchHint.style.display = "none";
+
+        scratchStatus.textContent = "Code unlocked";
+        scratchStatus.className = "text-[10px] font-semibold text-amber-300";
+
+        revealStatus.textContent = "100%";
+        revealStatus.className = "text-[10px] font-semibold text-amber-400";
+
+        copySection.classList.remove("hidden-after-reveal");
+        celebrate();
+      }
+
+      function celebrate() {
+        const duration = 2500;
+        const end = Date.now() + duration;
+
+        const interval = setInterval(() => {
+          const timeLeft = end - Date.now();
+          if (timeLeft <= 0) return clearInterval(interval);
+
+          const particleCount = 40 * (timeLeft / duration);
+
+          confetti({ particleCount, angle: 60, spread: 70, origin: { x: 0 }, colors: ['#FDE047', '#EAB308', '#CA8A04', '#ffffff'] });
+          confetti({ particleCount, angle: 120, spread: 70, origin: { x: 1 }, colors: ['#FDE047', '#EAB308', '#CA8A04', '#ffffff'] });
+        }, 180);
+      }
+
+      // Mouse events
+      canvas.addEventListener("mousedown", (e) => {
+        if (revealed) return;
+        isScratching = true;
+        lastPoint = getPoint(e);
+        scratch(lastPoint);
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (!isScratching || revealed) return;
+        scratch(getPoint(e));
+      });
+
+      window.addEventListener("mouseup", () => {
+        isScratching = false;
+        lastPoint = null;
+      });
+
+      // Touch events
+      canvas.addEventListener("touchstart", (e) => {
+        if (revealed) return;
+        e.preventDefault();
+        isScratching = true;
+        lastPoint = getPoint(e);
+        scratch(lastPoint);
+      }, { passive: false });
+
+      canvas.addEventListener("touchmove", (e) => {
+        if (!isScratching || revealed) return;
+        e.preventDefault();
+        scratch(getPoint(e));
+      }, { passive: false });
+
+      canvas.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        isScratching = false;
+        lastPoint = null;
+      }, { passive: false });
+
+      // Copy Action
+      copyButton.addEventListener("click", async () => {
+        const code = voucherCode.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(code);
+          copyButton.textContent = "Copied! ✓";
+          setTimeout(() => {
+            copyButton.textContent = "Copy Code";
+          }, 1800);
+        } catch (err) {
+          const textarea = document.createElement("textarea");
+          textarea.value = code;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          textarea.remove();
+
+          copyButton.textContent = "Copied! ✓";
+          setTimeout(() => {
+            copyButton.textContent = "Copy Code";
+          }, 1800);
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        if (!revealed) resizeCanvas();
+      });
+
+      resizeCanvas();
+    }
+
+    function renderNotFound() {
+      appEl.innerHTML = `
+        <div class="text-center space-y-4">
+          <p class="text-amber-400 font-semibold">Card Not Found</p>
+          <a href="${window.location.pathname}" class="inline-block bg-amber-500/20 border border-amber-500/30 text-xs px-4 py-2 rounded text-amber-200">View Dashboard</a>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
